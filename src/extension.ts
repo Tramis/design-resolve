@@ -22,10 +22,10 @@ async function parseNoteFiles(): Promise<NoteDefinition[]> {
         const text = document.getText();
 
         // 更健壮的正则表达式:
-        // 【([^】]+)】：   -> 匹配并捕获【键】和冒号
+        // 【([^】]+)】   -> 匹配并捕获【键】
         // ([\s\S]*?)       -> 非贪婪地捕获后面的所有字符（包括换行符），这是值
         // (?=\n【|$)       -> 匹配直到下一个【键】（在行首）或文件末尾为止
-        const regex = /【([^】]+)】：([\s\S]*?)(?=\n【|$)/g;
+        const regex = /【([^】]+)】([\s\S]*?)(?=\n【|$)/g;
         
         let match;
         while ((match = regex.exec(text)) !== null) {
@@ -129,7 +129,7 @@ export function activate(context: vscode.ExtensionContext) {
                         if (hoverRange.contains(position)) {
                             const markdownString = new vscode.MarkdownString();
                             markdownString.appendCodeblock(note.value, 'text'); // 使用代码块样式显示值，保留换行
-                            markdownString.appendMarkdown(`\n\n*来源: \`${vscode.workspace.asRelativePath(note.uri)}\`*`);
+                            markdownString.appendMarkdown(`\n\n*file: \`${vscode.workspace.asRelativePath(note.uri)}\`*`);
                             return new vscode.Hover(markdownString, hoverRange);
                         }
                     }
