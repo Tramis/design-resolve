@@ -1,0 +1,14 @@
+{
+  "iconDefinitions": {
+    "_design_icon": {
+      "iconPath": "./icons/add_notes_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg"
+    },
+    "_outline_icon": {
+      "iconPath": "./icons/lists_24dp_E3E3E3_FILL0_wght400_GRAD0_opsz24.svg"
+    }
+  },
+  "languageIds": {
+    "design": "_design_icon",
+    "outline": "_outline_icon"
+  }
+}
