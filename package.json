@@ -19,7 +19,7 @@
     "configuration": {
       "title": "highlight-color",
       "properties": {
-        "note-outline-linker.highlight.color": {
+        "design-resolve.highlight.color": {
           "type": "string",
           "default": "rgba(207, 174, 174, 0.82)",
           "description": "The font color for highlighting linked designs in .outline files. Use RGBA format for transparency.",
