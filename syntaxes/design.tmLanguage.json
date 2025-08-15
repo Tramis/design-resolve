@@ -12,7 +12,7 @@
       "patterns": [
         {
           "name": "comment.line.number-sign.design",
-          "match": "^\\s*#.*"
+          "match": "#.*"
         },
         {
           "name": "entity.name.tag.design",
@@ -24,10 +24,6 @@
               "name": "string.quoted.double.design"
             }
           ]
-        },
-        {
-          "name": "comment.line.number-sign.design",
-          "match": "：.*"
         }
       ]
     }

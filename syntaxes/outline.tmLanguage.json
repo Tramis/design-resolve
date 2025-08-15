@@ -5,7 +5,7 @@
   "patterns": [
     {
       "name": "comment.line.number-sign.outline",
-      "match": "^\\s*#.*"
+      "match": "#.*"
     },
     {
       "name": "keyword.control.outline",
