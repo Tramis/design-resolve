@@ -26,10 +26,10 @@ async function parseNoteFiles(): Promise<NoteDefinition[]> {
     for (const fileUri of noteFiles) {
         const document = await vscode.workspace.openTextDocument(fileUri);
         const text = document.getText();
-        
+
         // 正则表达式: 匹配【键】：后直到下一个【键】或文件末尾的所有内容
         const regex = /【([^】]+)】([\s\S]*?)(?=\n【|$)/g;
-        
+
         let match;
         while ((match = regex.exec(text)) !== null) {
             const key = match[1].trim();
@@ -67,7 +67,7 @@ function createOrUpdateDecorationType() {
     }
 
     // 从 VS Code 的设置中读取我们定义好的颜色值
-    const config = vscode.workspace.getConfiguration('highlight-color');
+    const config = vscode.workspace.getConfiguration('design-resolve');
     // 提供一个备用默认值，以防万一
     const color = config.get<string>('highlight.color', 'rgba(207, 174, 174, 0.82)');
 
@@ -92,7 +92,7 @@ async function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
         activeEditor.setDecorations(noteHighlightDecorationType, []);
         return;
     }
-    
+
     const text = activeEditor.document.getText();
     const decorationsArray: vscode.DecorationOptions[] = [];
 
@@ -106,7 +106,9 @@ async function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
             decorationsArray.push(decoration);
         }
     }
-    
+
+    console.log("now decoration:", noteHighlightDecorationType);
+
     activeEditor.setDecorations(noteHighlightDecorationType, decorationsArray);
 }
 
@@ -143,7 +145,7 @@ export function activate(context: vscode.ExtensionContext) {
                         const startPos = new vscode.Position(position.line, match.index);
                         const endPos = new vscode.Position(position.line, match.index + note.key.length);
                         const hoverRange = new vscode.Range(startPos, endPos);
-                        
+
                         if (hoverRange.contains(position)) {
                             const markdownString = new vscode.MarkdownString();
                             markdownString.appendCodeblock(note.value, 'text');
@@ -189,9 +191,10 @@ export function activate(context: vscode.ExtensionContext) {
                 updateDecorations(vscode.window.activeTextEditor);
             }
         }),
-        
+
         vscode.workspace.onDidChangeConfiguration(event => {
             if (event.affectsConfiguration('design-resolve.highlight.color')) {
+                console.log("config changed, updating decoration type...");
                 createOrUpdateDecorationType();
                 if (vscode.window.activeTextEditor) {
                     updateDecorations(vscode.window.activeTextEditor);
