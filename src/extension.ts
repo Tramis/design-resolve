@@ -1,6 +1,12 @@
 import * as vscode from 'vscode';
 
-// 定义笔记的数据结构
+// ================================================================= //
+// 1. 数据结构与核心解析逻辑
+// ================================================================= //
+
+/**
+ * 定义一个接口，用于存储从 .note 文件中解析出的每一条笔记的数据结构。
+ */
 interface NoteDefinition {
     key: string;
     value: string;
@@ -9,9 +15,9 @@ interface NoteDefinition {
 }
 
 /**
- * [已修复] 异步函数，用于查找并解析工作区中所有的 .note 文件。
- * 这个版本使用了更健壮的正则表达式，可以正确处理多行值。
- * @returns {Promise<NoteDefinition[]>}
+ * 异步函数，用于查找并解析工作区中所有的 .note 文件。
+ * 支持读取【键】下方的多行文本作为其值。
+ * @returns {Promise<NoteDefinition[]>} 返回一个包含所有解析后笔记对象的数组。
  */
 async function parseNoteFiles(): Promise<NoteDefinition[]> {
     const allNotes: NoteDefinition[] = [];
@@ -20,11 +26,8 @@ async function parseNoteFiles(): Promise<NoteDefinition[]> {
     for (const fileUri of noteFiles) {
         const document = await vscode.workspace.openTextDocument(fileUri);
         const text = document.getText();
-
-        // 更健壮的正则表达式:
-        // 【([^】]+)】   -> 匹配并捕获【键】
-        // ([\s\S]*?)       -> 非贪婪地捕获后面的所有字符（包括换行符），这是值
-        // (?=\n【|$)       -> 匹配直到下一个【键】（在行首）或文件末尾为止
+        
+        // 正则表达式: 匹配【键】：后直到下一个【键】或文件末尾的所有内容
         const regex = /【([^】]+)】([\s\S]*?)(?=\n【|$)/g;
         
         let match;
@@ -34,7 +37,7 @@ async function parseNoteFiles(): Promise<NoteDefinition[]> {
             const position = document.positionAt(match.index);
             const line = document.lineAt(position.line);
 
-            if (key && value) { // 确保键和值都不是空的
+            if (key && value) {
                 allNotes.push({
                     key: key,
                     value: value,
@@ -47,31 +50,45 @@ async function parseNoteFiles(): Promise<NoteDefinition[]> {
     return allNotes;
 }
 
-// --- 新功能：高亮相关的代码 ---
+// ================================================================= //
+// 2. 动态高亮逻辑
+// ================================================================= //
 
-// 1. 定义我们想要的高亮样式。
-const noteHighlightDecorationType = vscode.window.createTextEditorDecorationType({
-    // 只改变文本颜色，使用主题颜色以适应不同主题
-    // color: new vscode.ThemeColor('textLink.foreground'),
-	color: '#ff8e59ff',
-    
-    // [可选] 当鼠标悬浮时，显示手形光标，增强“可点击”的提示
-    cursor: 'pointer',
-});
+// 将装饰器类型定义为一个可变变量，以便在配置更改时更新它
+let noteHighlightDecorationType: vscode.TextEditorDecorationType | undefined;
 
 /**
- * [新功能] 更新编辑器中的高亮。
+ * 读取用户设置，并创建或更新高亮装饰器。
+ */
+function createOrUpdateDecorationType() {
+    // 如果旧的装饰器已存在，先销毁它，释放资源
+    if (noteHighlightDecorationType) {
+        noteHighlightDecorationType.dispose();
+    }
+
+    // 从 VS Code 的设置中读取我们定义好的颜色值
+    const config = vscode.workspace.getConfiguration('highlight-color');
+    // 提供一个备用默认值，以防万一
+    const color = config.get<string>('highlight.color', 'rgba(207, 174, 174, 0.82)');
+
+    // 使用读取到的颜色，创建一个新的装饰器类型
+    noteHighlightDecorationType = vscode.window.createTextEditorDecorationType({
+        color: color,
+        borderRadius: '2px',
+    });
+}
+
+/**
+ * 更新编辑器中的高亮。
  */
 async function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
-    if (!activeEditor || activeEditor.document.languageId !== 'outline') {
-        // 如果没有活动编辑器，或者当前语言不是 outline，则不做任何事
+    if (!activeEditor || activeEditor.document.languageId !== 'outline' || !noteHighlightDecorationType) {
         return;
     }
 
     const allNotes = await parseNoteFiles();
     const keys = allNotes.map(note => note.key);
     if (keys.length === 0) {
-        // 如果没有找到任何笔记，清除已有高亮并返回
         activeEditor.setDecorations(noteHighlightDecorationType, []);
         return;
     }
@@ -79,46 +96,47 @@ async function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
     const text = activeEditor.document.getText();
     const decorationsArray: vscode.DecorationOptions[] = [];
 
-    // 遍历所有笔记的键
     for (const key of keys) {
-        // 创建一个全局正则表达式来查找所有出现的键
         const regex = new RegExp(key, 'g');
         let match;
         while ((match = regex.exec(text)) !== null) {
             const startPos = activeEditor.document.positionAt(match.index);
             const endPos = activeEditor.document.positionAt(match.index + key.length);
-            
-            const decoration = {
-                range: new vscode.Range(startPos, endPos),
-                // hoverMessage 也可以在这里添加，但我们已经有 HoverProvider 了，所以保持简洁
-            };
+            const decoration = { range: new vscode.Range(startPos, endPos) };
             decorationsArray.push(decoration);
         }
     }
     
-    // 将计算出的所有高亮一次性应用到编辑器
     activeEditor.setDecorations(noteHighlightDecorationType, decorationsArray);
 }
 
+// ================================================================= //
+// 3. 插件激活与生命周期管理
+// ================================================================= //
 
-// 插件激活函数
+/**
+ * 插件的激活函数，当插件被激活时 VS Code 会调用此函数。
+ */
 export function activate(context: vscode.ExtensionContext) {
 
     console.log('Congratulations, your extension "note-outline-linker" is now active!');
+
+    // 插件激活时，立即根据用户设置创建初始的装饰器样式
+    createOrUpdateDecorationType();
 
     // 定义我们支持的语言ID
     const selector = { language: 'outline', scheme: 'file' };
 
     // 将所有需要被销毁的监听器和提供器都推入 context.subscriptions
     context.subscriptions.push(
-        // 1. 注册悬浮提示提供器
+
+        // --- 悬浮提示提供器 (完整版) ---
         vscode.languages.registerHoverProvider(selector, {
             async provideHover(document, position, token) {
                 const allNotes = await parseNoteFiles();
                 const lineText = document.lineAt(position.line).text;
 
                 for (const note of allNotes) {
-                    // 使用贪婪匹配来查找，避免只匹配单词的一部分
                     const regex = new RegExp(note.key, 'g');
                     let match;
                     while ((match = regex.exec(lineText)) !== null) {
@@ -128,8 +146,8 @@ export function activate(context: vscode.ExtensionContext) {
                         
                         if (hoverRange.contains(position)) {
                             const markdownString = new vscode.MarkdownString();
-                            markdownString.appendCodeblock(note.value, 'text'); // 使用代码块样式显示值，保留换行
-                            markdownString.appendMarkdown(`\n\n*file: \`${vscode.workspace.asRelativePath(note.uri)}\`*`);
+                            markdownString.appendCodeblock(note.value, 'text');
+                            markdownString.appendMarkdown(`\n\n*from: \`${vscode.workspace.asRelativePath(note.uri)}\`*`);
                             return new vscode.Hover(markdownString, hoverRange);
                         }
                     }
@@ -138,7 +156,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }),
 
-        // 2. 注册定义跳转提供器
+        // --- 定义跳转提供器 (完整版) ---
         vscode.languages.registerDefinitionProvider(selector, {
             async provideDefinition(document, position, token) {
                 const allNotes = await parseNoteFiles();
@@ -161,24 +179,39 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }),
 
-        // 3. 注册当活动编辑器改变时的监听器
+        // --- 事件监听器 ---
         vscode.window.onDidChangeActiveTextEditor(editor => {
             updateDecorations(editor);
         }),
 
-        // 4. 注册当文档保存时的监听器
         vscode.workspace.onDidSaveTextDocument(document => {
             if (vscode.window.activeTextEditor) {
                 updateDecorations(vscode.window.activeTextEditor);
             }
+        }),
+        
+        vscode.workspace.onDidChangeConfiguration(event => {
+            if (event.affectsConfiguration('note-outline-linker.highlight.color')) {
+                createOrUpdateDecorationType();
+                if (vscode.window.activeTextEditor) {
+                    updateDecorations(vscode.window.activeTextEditor);
+                }
+            }
         })
     );
 
-    // --- 首次激活时，立即为当前打开的文件更新一次高亮 ---
+    // 为首次打开的文件更新一次高亮
     if (vscode.window.activeTextEditor) {
         updateDecorations(vscode.window.activeTextEditor);
     }
 }
 
-// 插件停用函数
-export function deactivate() {}
+/**
+ * 插件的停用函数，当插件被禁用或 VS Code 关闭时调用。
+ */
+export function deactivate() {
+    // 插件停用时，销毁装饰器，清理样式
+    if (noteHighlightDecorationType) {
+        noteHighlightDecorationType.dispose();
+    }
+}
