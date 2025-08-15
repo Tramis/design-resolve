@@ -4,6 +4,10 @@
   "scopeName": "text.outline",
   "patterns": [
     {
+      "name": "comment.line.number-sign.outline",
+      "match": "^\\s*#.*"
+    },
+    {
       "name": "keyword.control.outline",
       "match": "^# use .*"
     }

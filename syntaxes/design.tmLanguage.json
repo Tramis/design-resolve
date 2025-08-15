@@ -9,21 +9,27 @@
   ],
   "repository": {
     "notes": {
-      "patterns": [{
-        "name": "entity.name.tag.design",
-        "begin": "【",
-        "end": "】",
-        "patterns": [
-          {
-            "match": "[^】]+",
-            "name": "string.quoted.double.design"
-          }
-        ]
-      },
-      {
-        "name": "comment.line.number-sign.design",
-        "match": "：.*"
-      }]
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.design",
+          "match": "^\\s*#.*"
+        },
+        {
+          "name": "entity.name.tag.design",
+          "begin": "【",
+          "end": "】",
+          "patterns": [
+            {
+              "match": "[^】]+",
+              "name": "string.quoted.double.design"
+            }
+          ]
+        },
+        {
+          "name": "comment.line.number-sign.design",
+          "match": "：.*"
+        }
+      ]
     }
   }
 }
