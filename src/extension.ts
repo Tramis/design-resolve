@@ -119,7 +119,7 @@ async function updateDecorations(activeEditor: vscode.TextEditor | undefined) {
  */
 export function activate(context: vscode.ExtensionContext) {
 
-    console.log('Congratulations, your extension "note-outline-linker" is now active!');
+    console.log('Congratulations, your extension "design-resolve" is now active!');
 
     // 插件激活时，立即根据用户设置创建初始的装饰器样式
     createOrUpdateDecorationType();
@@ -191,7 +191,7 @@ export function activate(context: vscode.ExtensionContext) {
         }),
         
         vscode.workspace.onDidChangeConfiguration(event => {
-            if (event.affectsConfiguration('note-outline-linker.highlight.color')) {
+            if (event.affectsConfiguration('design-resolve.highlight.color')) {
                 createOrUpdateDecorationType();
                 if (vscode.window.activeTextEditor) {
                     updateDecorations(vscode.window.activeTextEditor);
