@@ -8,12 +8,8 @@
 ## 高亮和跳转（Highlight and jump）
 
 
-`a.des`:
+`a.des / b.outline`:
+![example](./img/1.png)
 
-![a.des](./img/1.png)
-
-`b.outline`:
-
-![alt text](./img/2.png)
-
-贪婪匹配，按住 `ctrl` 左键点击 `.outline` 内的高亮部分跳转到 `.des` 中的定义(greedy match, hold `ctrl` and click the highlight part in `.outline` jump to the definition inside `.des`)
+1. 贪婪匹配，按住 `ctrl` 左键点击 `.outline` 内的高亮部分跳转到 `.des` 中的定义(greedy match, hold `ctrl` and click the highlight part in `.outline` jump to the definition inside `.des`)
+2. 悬浮展示(hover and show details)

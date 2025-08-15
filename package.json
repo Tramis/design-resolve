@@ -2,13 +2,17 @@
   "name": "design-resolve",
   "displayName": "design-resolve",
   "description": "",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
-    "vscode": "^1.103.0"
+    "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
   ],
+  "publisher": "letWindTellUrMom",
+  "repository": {
+    "url": "https://github.com/Tramis/design-resolve"
+  },
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
